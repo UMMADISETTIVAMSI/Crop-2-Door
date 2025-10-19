@@ -32,7 +32,7 @@ const Login = ({ setUser }) => {
               <i className="fas fa-sign-in-alt text-blue-400"></i>
             </div>
             <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Welcome Back</h2>
-            <p className="text-gray-600 dark:text-gray-300">Sign in to your Farm2Home account</p>
+            <p className="text-gray-600 dark:text-gray-300">Sign in to your Crop2Door account</p>
           </div>
           
           {error && (

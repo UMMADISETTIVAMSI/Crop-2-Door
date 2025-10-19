@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../utils/api';
 
 const Profile = ({ user, setUser }) => {
+
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     name: user.name,
@@ -9,7 +10,8 @@ const Profile = ({ user, setUser }) => {
     phone: user.phone || '',
     farmName: user.farmName || '',
     address: user.address || '',
-    profileImage: user.profileImage || ''
+    profileImage: user.profileImage || '',
+    deliveryArea: user.deliveryArea || ''
   });
 
   const handleImageUpload = (e) => {
@@ -40,138 +42,213 @@ const Profile = ({ user, setUser }) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-24">
-      <div className="max-w-md mx-auto bg-white border border-gray-200 p-6 rounded-lg shadow-lg">
-        <div className="text-center mb-6">
-          <div className="w-24 h-24 rounded-full mx-auto mb-4 bg-gray-200 flex items-center justify-center overflow-hidden">
-            {(profile.profileImage || user.profileImage) ? (
-              <img 
-                src={profile.profileImage || user.profileImage} 
-                alt="Profile" 
-                className="w-full h-full object-cover" 
-              />
-            ) : (
-              <span className="text-gray-600 text-2xl">👤</span>
-            )}
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            {user.role === 'farmer' ? 'Farmer' : 'Client'} Profile
-          </h2>
-        </div>
-        
-        {!isEditing ? (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-600">Name</label>
-              <p className="mt-1 text-gray-800">{user.name}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600">Email</label>
-              <p className="mt-1 text-gray-800">{user.email}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600">Role</label>
-              <p className="mt-1 text-gray-800 capitalize">{user.role}</p>
-            </div>
-            {user.phone && (
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Phone</label>
-                <p className="mt-1 text-gray-800">{user.phone}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800 pt-20">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
+          <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 p-1">
+                <div className="w-full h-full rounded-full bg-white dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                  {(profile.profileImage || user.profileImage) ? (
+                    <img 
+                      src={profile.profileImage || user.profileImage} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover rounded-full" 
+                    />
+                  ) : (
+                    <span className="text-gray-400 text-4xl">👤</span>
+                  )}
+                </div>
               </div>
-            )}
-            {user.role === 'farmer' && user.farmName && (
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Farm Name</label>
-                <p className="mt-1 text-gray-800">{user.farmName}</p>
+              <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-white rounded-full p-2">
+                <i className={`fas ${user.role === 'farmer' ? 'fa-seedling' : 'fa-user'} text-sm`}></i>
               </div>
-            )}
-            {user.address && (
-              <div>
-                <label className="block text-sm font-medium text-gray-600">Address</label>
-                <p className="mt-1 text-gray-800">{user.address}</p>
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-600">Profile Photo</label>
-              <p className="mt-1 text-gray-800">{user.profileImage ? 'Uploaded' : 'Not uploaded'}</p>
             </div>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Edit Profile
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleUpdate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-2">Profile Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                className="w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
-                onChange={handleImageUpload}
-              />
-              {profile.profileImage && (
-                <img src={profile.profileImage} alt="Preview" className="w-20 h-20 rounded-full mt-2 object-cover" />
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{user.name}</h1>
+              <p className="text-emerald-600 font-semibold text-lg capitalize mb-2">{user.role}</p>
+              <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
+              {user.role === 'farmer' && user.farmName && (
+                <p className="text-blue-600 font-medium mt-1">🌾 {user.farmName}</p>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-800">Name</label>
-              <input
-                type="text"
-                className="mt-1 w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
-                value={profile.name}
-                onChange={(e) => setProfile({...profile, name: e.target.value})}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-800">Phone</label>
-              <input
-                type="tel"
-                className="mt-1 w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
-                value={profile.phone}
-                onChange={(e) => setProfile({...profile, phone: e.target.value})}
-              />
-            </div>
-            {user.role === 'farmer' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-800">Farm Name</label>
-                <input
-                  type="text"
-                  className="mt-1 w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
-                  value={profile.farmName}
-                  onChange={(e) => setProfile({...profile, farmName: e.target.value})}
-                />
-              </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-800">Address</label>
-              <textarea
-                className="mt-1 w-full p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
-                value={profile.address}
-                onChange={(e) => setProfile({...profile, address: e.target.value})}
-                rows="3"
-              />
-            </div>
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsEditing(false)}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
+          </div>
+        </div>
+
+        {/* Profile Content */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl mb-8">
+          <div className="p-8">
+                {!isEditing ? (
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                        <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Personal Information</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-300">Name:</span>
+                            <span className="font-medium dark:text-white">{user.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-300">Email:</span>
+                            <span className="font-medium dark:text-white">{user.email}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-300">Role:</span>
+                            <span className="font-medium dark:text-white capitalize">{user.role}</span>
+                          </div>
+                          {user.phone && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 dark:text-gray-300">Phone:</span>
+                              <span className="font-medium dark:text-white">{user.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {user.role === 'farmer' && (
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg">
+                          <h3 className="font-semibold text-emerald-800 dark:text-emerald-300 mb-3">Farm Details</h3>
+                          <div className="space-y-3">
+                            {user.farmName && (
+                              <div className="flex justify-between">
+                                <span className="text-emerald-600 dark:text-emerald-400">Farm Name:</span>
+                                <span className="font-medium dark:text-white">{user.farmName}</span>
+                              </div>
+                            )}
+                            {user.deliveryArea && (
+                              <div className="flex justify-between">
+                                <span className="text-emerald-600 dark:text-emerald-400">Delivery Area:</span>
+                                <span className="font-medium dark:text-white">{user.deliveryArea}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-3">Contact Information</h3>
+                        <div className="space-y-3">
+                          {user.address && (
+                            <div>
+                              <span className="text-blue-600 dark:text-blue-400 block mb-1">Address:</span>
+                              <span className="font-medium dark:text-white">{user.address}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                        <h3 className="font-semibold text-purple-800 dark:text-purple-300 mb-3">Account Status</h3>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                          <span className="text-green-600 font-medium">Active</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleUpdate} className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Profile Image</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                          onChange={handleImageUpload}
+                        />
+                        {profile.profileImage && (
+                          <img src={profile.profileImage} alt="Preview" className="w-20 h-20 rounded-full mt-2 object-cover" />
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Name</label>
+                        <input
+                          type="text"
+                          className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                          value={profile.name}
+                          onChange={(e) => setProfile({...profile, name: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Phone</label>
+                        <input
+                          type="tel"
+                          className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                          value={profile.phone}
+                          onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {user.role === 'farmer' && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Farm Name</label>
+                            <input
+                              type="text"
+                              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                              value={profile.farmName}
+                              onChange={(e) => setProfile({...profile, farmName: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Delivery Area</label>
+                            <input
+                              type="text"
+                              className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                              value={profile.deliveryArea}
+                              onChange={(e) => setProfile({...profile, deliveryArea: e.target.value})}
+                            />
+                          </div>
+                        </>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Address</label>
+                        <textarea
+                          className="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                          value={profile.address}
+                          onChange={(e) => setProfile({...profile, address: e.target.value})}
+                          rows="3"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="md:col-span-2 flex space-x-4">
+                      <button
+                        type="submit"
+                        className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                      >
+                        <i className="fas fa-save mr-2"></i>Save Changes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors font-semibold"
+                      >
+                        <i className="fas fa-times mr-2"></i>Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+                
+                {!isEditing && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    >
+                      <i className="fas fa-edit mr-2"></i>Edit Profile
+                    </button>
+                  </div>
+                )}
+          </div>
+        </div>
       </div>
     </div>
   );

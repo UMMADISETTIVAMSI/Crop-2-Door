@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { products, orders } from '../utils/api';
+import { products, orders, auth } from '../utils/api';
 import { useCart } from '../contexts/CartContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 
 const Dashboard = ({ user }) => {
   const { addToCart } = useCart();
-  const [activeTab, setActiveTab] = useState(user.role === 'farmer' ? 'products' : 'browse');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(
+    location.state?.activeTab || (user.role === 'farmer' ? 'products' : 'browse')
+  );
   const [productList, setProductList] = useState([]);
   const [myProducts, setMyProducts] = useState([]);
   const [orderList, setOrderList] = useState([]);
@@ -12,9 +18,28 @@ const Dashboard = ({ user }) => {
   const [favorites, setFavorites] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [category, setCategory] = useState('');
+  const [deliveryArea, setDeliveryArea] = useState(localStorage.getItem('selectedDeliveryArea') || '');
+  const [deliveryAreas, setDeliveryAreas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState({
+    products: false,
+    myProducts: false,
+    orders: false,
+    favorites: false,
+    deliveryAreas: false
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Advanced search filters
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+
 
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [addingProduct, setAddingProduct] = useState(false);
@@ -27,17 +52,61 @@ const Dashboard = ({ user }) => {
   const [editProduct, setEditProduct] = useState({});
 
   useEffect(() => {
-    if (user.role === 'client') loadFavorites(); // Load favorites on component mount for clients
+    const loadInitialData = async () => {
+      setInitialLoading(true);
+      try {
+        if (user.role === 'client' && !dataLoaded.favorites) {
+          await loadFavorites();
+          setDataLoaded(prev => ({ ...prev, favorites: true }));
+        }
 
-    if (activeTab === 'browse') {
-      setCurrentPage(1);
-      loadProducts(1);
-    }
-    if (activeTab === 'products') loadMyProducts();
-    if (activeTab === 'orders') loadOrders();
+        if (activeTab === 'browse') {
+          if (!dataLoaded.products) {
+            setCurrentPage(1);
+            await loadProducts(1);
+            setDataLoaded(prev => ({ ...prev, products: true }));
+          }
+          if (!dataLoaded.deliveryAreas) {
+            await loadDeliveryAreas();
+            setDataLoaded(prev => ({ ...prev, deliveryAreas: true }));
+          }
+        }
+        if (activeTab === 'products' && !dataLoaded.myProducts) {
+          await loadMyProducts();
+          setDataLoaded(prev => ({ ...prev, myProducts: true }));
+        }
+        if (activeTab === 'orders' && !dataLoaded.orders) {
+          await loadOrders();
+          setDataLoaded(prev => ({ ...prev, orders: true }));
+        }
+        if (activeTab === 'favorites' && !dataLoaded.favorites) {
+          await loadFavorites();
+          setDataLoaded(prev => ({ ...prev, favorites: true }));
+        }
+      } finally {
+        setInitialLoading(false);
+      }
+    };
 
-    if (activeTab === 'favorites') loadFavorites();
+    loadInitialData();
   }, [activeTab]);
+
+  // Handle navigation state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      console.log('Setting active tab from navigation:', location.state.activeTab);
+      setActiveTab(location.state.activeTab);
+    }
+    if (location.state?.deliveryArea) {
+      console.log('Setting delivery area from navigation:', location.state.deliveryArea);
+      setDeliveryArea(location.state.deliveryArea);
+      localStorage.setItem('selectedDeliveryArea', location.state.deliveryArea);
+    }
+    // Clear the state to prevent issues on refresh
+    if (location.state) {
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   useEffect(() => {
     if (user.role === 'client') loadFavorites();
@@ -68,29 +137,40 @@ const Dashboard = ({ user }) => {
         loadProducts(1);
       }
     }, 300),
-    [searchTerm, category, activeTab]
+    [searchTerm, category, deliveryArea, minPrice, maxPrice, sortBy, sortOrder, activeTab]
   );
 
   useEffect(() => {
     debouncedSearch();
-  }, [searchTerm, category, debouncedSearch]);
+  }, [searchTerm, category, deliveryArea, minPrice, maxPrice, sortBy, sortOrder, debouncedSearch]);
+
+  const loadDeliveryAreas = async () => {
+    try {
+      console.log('Loading farmer delivery areas...');
+      const response = await auth.getFarmerAreas();
+      console.log('Farmer areas response:', response.data);
+      setDeliveryAreas(response.data || []);
+    } catch (error) {
+      console.error('Error loading farmer areas:', error);
+    }
+  };
 
   const loadProducts = async (page = currentPage) => {
     try {
-      setLoading(true);
-      const params = { page, limit: 12 };
+      if (!dataLoaded.products) setLoading(true);
+      const params = { page, limit: 12, sortBy, sortOrder };
       if (searchTerm.trim()) params.search = searchTerm.trim();
       if (category) params.category = category;
+      if (deliveryArea) params.deliveryArea = deliveryArea;
+      if (minPrice) params.minPrice = minPrice;
+      if (maxPrice) params.maxPrice = maxPrice;
       
-      console.log('Loading products with params:', params);
       const response = await products.getAll(params);
-      console.log('Products response:', response.data);
       setProductList(response.data.products || []);
       setTotalPages(response.data.totalPages || 1);
       setCurrentPage(response.data.page || 1);
     } catch (error) {
       console.error('Error loading products:', error);
-      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -107,12 +187,15 @@ const Dashboard = ({ user }) => {
 
   const loadOrders = async () => {
     try {
+      console.log('Loading orders for user role:', user.role);
       const response = user.role === 'farmer' 
         ? await orders.getFarmerOrders()
         : await orders.getMyOrders();
+      console.log('Orders response:', response.data);
       setOrderList(response.data);
     } catch (error) {
       console.error('Error loading orders:', error);
+      console.error('Error details:', error.response?.data);
     }
   };
 
@@ -173,7 +256,8 @@ const Dashboard = ({ user }) => {
         farmAddress: '', farmPhone: '', image: ''
       });
       alert('Product added successfully!');
-      loadMyProducts();
+      await loadMyProducts();
+      setDataLoaded(prev => ({ ...prev, myProducts: true }));
     } catch (error) {
       console.error('Error adding product:', error);
       alert('Error adding product: ' + (error.response?.data?.message || error.message));
@@ -197,7 +281,7 @@ const Dashboard = ({ user }) => {
     try {
       await orders.create({ productId, quantity: parseInt(quantity) });
       alert('Order placed successfully!');
-      loadProducts();
+      await loadProducts();
 
     } catch (error) {
       alert(error.response?.data?.message || 'Error placing order');
@@ -207,7 +291,7 @@ const Dashboard = ({ user }) => {
   const updateOrderStatus = async (orderId, status) => {
     try {
       await orders.updateStatus(orderId, status);
-      loadOrders();
+      await loadOrders();
 
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -219,13 +303,25 @@ const Dashboard = ({ user }) => {
       try {
         await orders.cancel(orderId);
         alert('Order cancelled successfully!');
-        loadOrders();
+        await loadOrders();
 
       } catch (error) {
         alert(error.response?.data?.message || 'Error cancelling order');
       }
     }
   };
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-emerald-500 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Loading Dashboard...</h2>
+          <p className="text-gray-600 dark:text-gray-300">Setting up your personalized experience</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 pt-24">
@@ -263,40 +359,148 @@ const Dashboard = ({ user }) => {
           onClick={() => setActiveTab('orders')}
           className={`px-4 py-2 rounded transition-colors ${activeTab === 'orders' ? 'bg-blue-400 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'}`}
         >
-          {user.role === 'farmer' ? 'Incoming Orders' : 'My Orders'}
+          {user.role === 'farmer' ? 'Incoming Orders' : 'Orders & Cart'}
         </button>
       </div>
 
       {activeTab === 'browse' && (
         <div>
-          <div className="flex space-x-4 mb-6">
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="flex-1 p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          {deliveryArea && (
+            <div className="mb-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-700 dark:text-emerald-300">
+                  <i className="fas fa-map-marker-alt mr-2"></i>
+                  Showing products in: <strong>{deliveryArea}</strong>
+                </span>
+                <button
+                  onClick={() => {
+                    setDeliveryArea('');
+                    localStorage.removeItem('selectedDeliveryArea');
+                  }}
+                  className="text-emerald-600 hover:text-emerald-800 text-sm"
+                >
+                  Change Area
+                </button>
+              </div>
+            </div>
+          )}
+          
+          <div className="space-y-4 mb-6">
+            <div className="flex space-x-4">
+              <input
+                type="text"
+                placeholder="Search Products"
+                className="flex-1 p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
 
-            <select
-              className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              <option value="Vegetables">Vegetables</option>
-              <option value="Fruits">Fruits</option>
-              <option value="Dairy">Dairy</option>
-              <option value="Grains">Grains</option>
-              <option value="Others">Others</option>
-            </select>
+              <select
+                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">All Categories</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Grains">Grains</option>
+                <option value="Others">Others</option>
+              </select>
 
+              <select
+                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                value={deliveryArea}
+                onChange={(e) => {
+                  setDeliveryArea(e.target.value);
+                  localStorage.setItem('selectedDeliveryArea', e.target.value);
+                }}
+              >
+                <option value="">All Areas</option>
+                {deliveryAreas.map((area, index) => (
+                  <option key={index} value={area.area}>
+                    {area.area}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                <i className="fas fa-filter mr-2"></i>
+                Filters
+              </button>
+            </div>
+
+            {showAdvancedFilters && (
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price Range</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="number"
+                        placeholder="Min ₹"
+                        className="w-full p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Max ₹"
+                        className="w-full p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
+                    <select
+                      className="w-full p-2 border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                      value={`${sortBy}-${sortOrder}`}
+                      onChange={(e) => {
+                        const [field, order] = e.target.value.split('-');
+                        setSortBy(field);
+                        setSortOrder(order);
+                      }}
+                    >
+                      <option value="createdAt-desc">Newest First</option>
+                      <option value="createdAt-asc">Oldest First</option>
+                      <option value="price-asc">Price: Low to High</option>
+                      <option value="price-desc">Price: High to Low</option>
+                      <option value="rating-desc">Highest Rated</option>
+                      <option value="popularity-desc">Most Popular</option>
+                      <option value="name-asc">Name: A to Z</option>
+                    </select>
+                  </div>
+
+                  <div></div>
+
+                  <div className="flex items-end">
+                    <button
+                      onClick={() => {
+                        setMinPrice('');
+                        setMaxPrice('');
+                        setSortBy('createdAt');
+                        setSortOrder('desc');
+                      }}
+                      className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           {loading ? (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-300">Loading products...</p>
+              <img src="https://media.giphy.com/media/xTkcEQACH24SMPxIQg/giphy.gif" alt="Loading" className="w-20 h-20 mx-auto mb-4 rounded-full" />
+              <p className="mt-2 text-gray-600 dark:text-gray-300">Finding fresh products...</p>
             </div>
           ) : (
             <>
@@ -307,9 +511,19 @@ const Dashboard = ({ user }) => {
                   productList.map(product => (
                     <div key={product._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-blue-300 cursor-pointer">
                       {product.image && (
-                        <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded-lg mb-3 transition-transform duration-300 hover:scale-110" />
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-32 object-cover rounded-lg mb-3 transition-transform duration-300 hover:scale-110" 
+                          onClick={() => navigate(`/product/${product._id}`)}
+                        />
                       )}
-                      <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white transition-colors duration-300 hover:text-blue-600">{product.name}</h3>
+                      <h3 
+                        className="text-lg font-semibold mb-2 text-gray-800 dark:text-white transition-colors duration-300 hover:text-blue-600 cursor-pointer"
+                        onClick={() => navigate(`/product/${product._id}`)}
+                      >
+                        {product.name}
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-1 text-sm">Category: {product.category}</p>
                       <p className="text-emerald-500 font-bold mb-2">₹{product.price}/{product.unit}</p>
                       <p className="text-gray-600 dark:text-gray-300 mb-1 text-sm">Available: {product.quantity} {product.unit}</p>
@@ -336,7 +550,16 @@ const Dashboard = ({ user }) => {
                             const qty = document.getElementById(`qty-${product._id}`).value;
                             if (qty) {
                               addToCart(product, parseInt(qty));
-                              alert('Added to cart!');
+                              // Show success GIF
+                              const successDiv = document.createElement('div');
+                              successDiv.innerHTML = `
+                                <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); text-align: center; border: 3px solid #fff;">
+                                  <img src="https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif" style="width: 120px; height: 120px; margin-bottom: 15px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);" />
+                                  <p style="color: #fff; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">✨ Added to Cart! 🛒</p>
+                                </div>
+                              `;
+                              document.body.appendChild(successDiv);
+                              setTimeout(() => document.body.removeChild(successDiv), 2000);
                               document.getElementById(`qty-${product._id}`).value = '';
                             }
                           }}
@@ -347,7 +570,9 @@ const Dashboard = ({ user }) => {
                         <button
                           onClick={() => {
                             const qty = document.getElementById(`qty-${product._id}`).value;
-                            if (qty) handleOrder(product._id, qty);
+                            if (qty) {
+                              navigate(`/product/${product._id}`);
+                            }
                           }}
                           className="bg-emerald-400 text-white px-3 py-2 rounded hover:bg-emerald-500 text-sm transform transition-all duration-200 hover:scale-105 active:scale-95"
                         >
@@ -396,7 +621,7 @@ const Dashboard = ({ user }) => {
       {activeTab === 'products' && user.role === 'farmer' && (
         <div>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">My Products</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">My Products</h2>
             <button
               onClick={() => setShowAddProduct(true)}
               className="bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500"
@@ -406,19 +631,19 @@ const Dashboard = ({ user }) => {
           </div>
 
           {showAddProduct && (
-            <div className="bg-white border border-gray-200 p-6 rounded-lg mb-6 shadow-lg">
-              <h3 className="text-xl font-bold mb-4 text-gray-800">Add New Product</h3>
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg mb-6 shadow-lg">
+              <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Add New Product</h3>
               <form onSubmit={handleAddProduct} className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="Product Name"
-                  className="p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
+                  className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                   required
                 />
                 <select
-                  className="p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
+                  className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                   value={newProduct.category}
                   onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
                 >
@@ -470,11 +695,11 @@ const Dashboard = ({ user }) => {
                   required
                 />
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-800 mb-2">Product Image</label>
+                  <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Product Image</label>
                   <input
                     type="file"
                     accept="image/*"
-                    className="p-3 border border-gray-200 rounded-lg w-full bg-white text-gray-800"
+                    className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     onChange={handleImageUpload}
                   />
                   {newProduct.image && (
@@ -505,17 +730,17 @@ const Dashboard = ({ user }) => {
 
           <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-4">
             {myProducts.length === 0 ? (
-              <p className="col-span-full text-center text-gray-600">No products added yet</p>
+              <p className="col-span-full text-center text-gray-600 dark:text-gray-300">No products added yet</p>
             ) : (
               myProducts.map(product => (
-                <div key={product._id} className="bg-white border border-gray-200 p-4 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-blue-300 cursor-pointer">
+                <div key={product._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-blue-300 cursor-pointer">
                   {product.image && (
                     <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded-lg mb-3 transition-transform duration-300 hover:scale-110" />
                   )}
-                  <h3 className="text-lg font-semibold mb-2 text-gray-800">{product.name}</h3>
-                  <p className="text-gray-600 mb-1 text-sm">Category: {product.category}</p>
+                  <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">{product.name}</h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-1 text-sm">Category: {product.category}</p>
                   <p className="text-emerald-500 font-bold mb-2">₹{product.price}/{product.unit}</p>
-                  <p className="text-gray-600 mb-3 text-sm">Available: {product.quantity} {product.unit}</p>
+                  <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">Available: {product.quantity} {product.unit}</p>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => {
@@ -530,7 +755,16 @@ const Dashboard = ({ user }) => {
                       onClick={() => {
                         if (window.confirm('Are you sure you want to delete this product?')) {
                           products.delete(product._id).then(() => {
-                            alert('Product deleted successfully!');
+                            // Show delete GIF
+                            const deleteDiv = document.createElement('div');
+                            deleteDiv.innerHTML = `
+                              <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); text-align: center;">
+                                <img src="https://media.giphy.com/media/l46Cy1rHbQ92uuLXa/giphy.gif" style="width: 100px; height: 100px; margin-bottom: 15px; border-radius: 50%; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);" />
+                                <p style="color: #dc2626; font-weight: bold;">Product Deleted! 🗑️</p>
+                              </div>
+                            `;
+                            document.body.appendChild(deleteDiv);
+                            setTimeout(() => document.body.removeChild(deleteDiv), 2000);
                             loadMyProducts();
                           });
                         }
@@ -548,8 +782,8 @@ const Dashboard = ({ user }) => {
           {/* Edit Product Modal */}
           {editingProduct && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
-                <h3 className="text-xl font-bold mb-4 text-gray-800">Edit Product</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto">
+                <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Edit Product</h3>
                 <form onSubmit={async (e) => {
                   e.preventDefault();
                   try {
@@ -564,13 +798,13 @@ const Dashboard = ({ user }) => {
                   <input
                     type="text"
                     placeholder="Product Name"
-                    className="p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
+                    className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     value={editProduct.name || ''}
                     onChange={(e) => setEditProduct({...editProduct, name: e.target.value})}
                     required
                   />
                   <select
-                    className="p-3 border border-gray-200 rounded-lg bg-white text-gray-800"
+                    className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                     value={editProduct.category || 'Vegetables'}
                     onChange={(e) => setEditProduct({...editProduct, category: e.target.value})}
                   >
@@ -621,11 +855,11 @@ const Dashboard = ({ user }) => {
                     required
                   />
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-800 mb-2">Product Image</label>
+                    <label className="block text-sm font-medium text-gray-800 dark:text-white mb-2">Product Image</label>
                     <input
                       type="file"
                       accept="image/*"
-                      className="p-3 border border-gray-200 rounded-lg w-full bg-white text-gray-800"
+                      className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg w-full bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                       onChange={(e) => {
                         const file = e.target.files[0];
                         if (file) {
@@ -677,9 +911,19 @@ const Dashboard = ({ user }) => {
               favorites.map(product => (
                 <div key={product._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-blue-300 cursor-pointer">
                   {product.image && (
-                    <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded-lg mb-3 transition-transform duration-300 hover:scale-110" />
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="w-full h-32 object-cover rounded-lg mb-3 transition-transform duration-300 hover:scale-110 cursor-pointer" 
+                      onClick={() => navigate(`/product/${product._id}`)}
+                    />
                   )}
-                  <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white transition-colors duration-300 hover:text-blue-600">{product.name}</h3>
+                  <h3 
+                    className="text-lg font-semibold mb-2 text-gray-800 dark:text-white transition-colors duration-300 hover:text-blue-600 cursor-pointer"
+                    onClick={() => navigate(`/product/${product._id}`)}
+                  >
+                    {product.name}
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-1 text-sm">Category: {product.category}</p>
                   <p className="text-emerald-500 font-bold mb-2">₹{product.price}/{product.unit}</p>
                   <p className="text-gray-600 dark:text-gray-300 mb-1 text-sm">Available: {product.quantity} {product.unit}</p>
@@ -695,7 +939,16 @@ const Dashboard = ({ user }) => {
                     <button
                       onClick={() => {
                         addToCart(product, 1);
-                        alert('Added to cart!');
+                        // Show cart success GIF
+                        const cartDiv = document.createElement('div');
+                        cartDiv.innerHTML = `
+                          <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); text-align: center; border: 3px solid #fff;">
+                            <img src="https://media.giphy.com/media/l0HlSz7gvgkiO8xQA/giphy.gif" style="width: 120px; height: 120px; margin-bottom: 15px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.3);" />
+                            <p style="color: #fff; font-weight: bold; font-size: 18px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">💖 Added from Favorites!</p>
+                          </div>
+                        `;
+                        document.body.appendChild(cartDiv);
+                        setTimeout(() => document.body.removeChild(cartDiv), 2000);
                       }}
                       className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 text-sm transform transition-all duration-200 hover:scale-105"
                     >
@@ -711,11 +964,29 @@ const Dashboard = ({ user }) => {
 
       {activeTab === 'orders' && (
         <div>
-          <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">
-            {user.role === 'farmer' ? 'Order Management' : 'My Orders'}
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+              {user.role === 'farmer' ? 'Order Management' : 'My Orders'}
+            </h2>
+            <button
+              onClick={loadOrders}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+            >
+              <i className="fas fa-refresh mr-2"></i>
+              Refresh
+            </button>
+          </div>
           <div className="space-y-4">
-            {orderList && orderList.length > 0 ? orderList.map(order => (
+            {orderList && orderList.length > 0 ? (
+              <p className="text-sm text-gray-500 mb-4">Found {orderList.length} orders</p>
+            ) : null}
+            {orderList && orderList.length > 0 ? orderList
+              .sort((a, b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (a.status !== 'pending' && b.status === 'pending') return 1;
+                return 0;
+              })
+              .map(order => (
               <div key={order._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg shadow-lg">
                 <div className="flex justify-between items-start">
                   <div>
@@ -728,6 +999,12 @@ const Dashboard = ({ user }) => {
                     <p className="text-gray-600 dark:text-gray-300 mb-2">
                       Phone: {user.role === 'farmer' ? order.client?.phone : order.farmer?.phone}
                     </p>
+                    {user.role === 'farmer' && order.deliveryAddress && (
+                      <p className="text-gray-600 dark:text-gray-300 mb-2">
+                        <i className="fas fa-map-marker-alt mr-2"></i>
+                        Delivery: {order.deliveryAddress}
+                      </p>
+                    )}
                     <p className="text-emerald-500 font-bold mb-2">Total: ₹{order.totalPrice}</p>
                     <p className="text-gray-600 dark:text-gray-300">Status: <span className={`font-semibold ${order.status === 'delivered' ? 'text-green-600' : order.status === 'confirmed' ? 'text-blue-600' : order.status === 'cancelled' ? 'text-red-600' : 'text-orange-600'}`}>{order.status}</span></p>
                   </div>

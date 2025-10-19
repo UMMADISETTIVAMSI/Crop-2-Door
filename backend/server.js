@@ -10,15 +10,12 @@ const orderRoutes = require('./routes/orders');
 
 const app = express();
 
-app.use(compression());
 app.use(cors({
-  origin: true, // Allow all origins for now
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true,
+  credentials: true
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 const connectDB = async () => {
   try {
@@ -31,9 +28,11 @@ const connectDB = async () => {
       throw new Error('MongoDB URI must be a valid string');
     }
     
-    console.log('Connecting to MongoDB...');
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB Atlas successfully');
+    await mongoose.connect(mongoUri, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
     process.exit(1);

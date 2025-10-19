@@ -4,7 +4,7 @@ import { auth } from '../utils/api';
 
 const Register = ({ setUser }) => {
   const [formData, setFormData] = useState({
-    name: '', username: '', email: '', password: '', role: 'client', phone: '', address: '', farmName: ''
+    name: '', username: '', email: '', password: '', role: 'client', phone: '', address: '', farmName: '', deliveryArea: ''
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -128,15 +128,28 @@ const Register = ({ setUser }) => {
           </div>
 
           {formData.role === 'farmer' && (
-            <div className="mb-4">
-              <label className="block text-gray-700 dark:text-gray-300 mb-2">Farm Name</label>
-              <input
-                type="text"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
-                value={formData.farmName}
-                onChange={(e) => setFormData({...formData, farmName: e.target.value})}
-              />
-            </div>
+            <>
+              <div className="mb-4">
+                <label className="block text-gray-700 dark:text-gray-300 mb-2">Farm Name</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  value={formData.farmName}
+                  onChange={(e) => setFormData({...formData, farmName: e.target.value})}
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 dark:text-gray-300 mb-2">Delivery Area</label>
+                <input
+                  type="text"
+                  placeholder="Enter your delivery area (e.g., Mumbai - Andheri)"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                  value={formData.deliveryArea}
+                  onChange={(e) => setFormData({...formData, deliveryArea: e.target.value})}
+                  required
+                />
+              </div>
+            </>
           )}
           <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors">
             Register

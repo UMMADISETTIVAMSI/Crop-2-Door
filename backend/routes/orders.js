@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/', auth, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, deliveryAddress } = req.body;
     
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -17,7 +17,8 @@ router.post('/', auth, async (req, res) => {
       farmer: product.farmer,
       product: productId,
       quantity,
-      totalPrice: product.price * quantity
+      totalPrice: product.price * quantity,
+      deliveryAddress
     });
     
     await order.save();

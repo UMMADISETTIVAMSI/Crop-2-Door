@@ -27,16 +27,20 @@ export const auth = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   updateProfile: (data) => api.put('/auth/profile', data),
+  getFarmerAreas: () => api.get('/auth/farmer-areas'),
 };
 
 export const products = {
   getAll: (params) => api.get('/products', { params }),
+  getById: (id) => api.get(`/products/${id}`),
+  getDeliveryAreas: () => api.get('/products/delivery-areas'),
   create: (data) => api.post('/products', data),
   getMyProducts: () => api.get('/products/my-products'),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
   getFavorites: () => api.get('/products/favorites'),
   toggleFavorite: (id) => api.post(`/products/${id}/favorite`),
+  getRevenueReport: (period) => api.get('/products/revenue-report', { params: { period } }),
 };
 
 export const orders = {

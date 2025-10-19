@@ -1,7 +1,21 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import LocationSelector from '../components/LocationSelector';
 
 const Home = () => {
+  const navigate = useNavigate();
+  const [selectedArea, setSelectedArea] = useState('');
+
+  const handleAreaSelect = (area, showProducts = false) => {
+    setSelectedArea(area);
+    if (showProducts && area) {
+      // Save selected area to localStorage for persistence
+      localStorage.setItem('selectedDeliveryArea', area);
+      // Navigate to dashboard with area filter
+      navigate('/dashboard', { state: { deliveryArea: area } });
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -27,6 +41,16 @@ const Home = () => {
               </Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Location Selector Section */}
+      <div className="py-20 bg-white/50 dark:bg-gray-800/50">
+        <div className="container mx-auto px-6">
+          <LocationSelector 
+            onAreaSelect={handleAreaSelect}
+            selectedArea={selectedArea}
+          />
         </div>
       </div>
 

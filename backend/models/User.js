@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   address: { type: String },
   farmName: { type: String },
+  deliveryArea: { type: String },
   profileImage: { type: String },
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
 }, { timestamps: true });

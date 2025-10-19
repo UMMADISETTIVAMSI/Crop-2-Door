@@ -56,9 +56,9 @@ const Cart = ({ user }) => {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-16">
-          <i className="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
-          <h2 className="text-2xl font-bold text-gray-600 mb-4">Your cart is empty</h2>
-          <p className="text-gray-500 mb-8">Add some products to get started!</p>
+          <i className="fas fa-shopping-cart text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-300 mb-4">Your cart is empty</h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-8">Add some products to get started!</p>
           <button 
             onClick={() => navigate('/dashboard')}
             className="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600"
@@ -72,13 +72,13 @@ const Cart = ({ user }) => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Shopping Cart</h1>
       
       {!showCheckout ? (
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             {cartItems.map(item => (
-              <div key={item._id} className="bg-white rounded-lg shadow-md p-6 mb-4">
+              <div key={item._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <img 
@@ -87,22 +87,22 @@ const Cart = ({ user }) => {
                       className="w-20 h-20 object-cover rounded-lg"
                     />
                     <div>
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
-                      <p className="text-gray-600">{item.category}</p>
+                      <h3 className="font-semibold text-lg text-gray-800 dark:text-white">{item.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-300">{item.category}</p>
                       <p className="text-emerald-600 font-bold">₹{item.price}/{item.unit}</p>
                     </div>
                   </div>
                   
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
-                      <label className="text-sm text-gray-600">Qty:</label>
+                      <label className="text-sm text-gray-600 dark:text-gray-300">Qty:</label>
                       <input
                         type="number"
                         min="1"
                         max={item.availableQuantity}
                         value={item.quantity}
                         onChange={(e) => handleQuantityChange(item._id, e.target.value)}
-                        className="w-16 px-2 py-1 border rounded text-center"
+                        className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                       />
                     </div>
                     
@@ -122,8 +122,8 @@ const Cart = ({ user }) => {
             ))}
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6 h-fit">
-            <h3 className="text-xl font-bold mb-4">Order Summary</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-fit">
+            <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Order Summary</h3>
             <div className="space-y-2 mb-4">
               {cartItems.map(item => (
                 <div key={item._id} className="flex justify-between text-sm">
@@ -148,67 +148,67 @@ const Cart = ({ user }) => {
         </div>
       ) : (
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Delivery Information</h2>
-          <form onSubmit={handlePlaceOrder} className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Delivery Information</h2>
+          <form onSubmit={handlePlaceOrder} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Full Name</label>
+                <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-white">Full Name</label>
                 <input
                   type="text"
                   required
                   value={address.name}
                   onChange={(e) => setAddress({...address, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Phone Number</label>
+                <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-white">Phone Number</label>
                 <input
                   type="tel"
                   required
                   value={address.phone}
                   onChange={(e) => setAddress({...address, phone: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                 />
               </div>
             </div>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Street Address</label>
+              <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-white">Street Address</label>
               <input
                 type="text"
                 required
                 value={address.street}
                 onChange={(e) => setAddress({...address, street: e.target.value})}
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
               />
             </div>
             
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-sm font-medium mb-2">City</label>
+                <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-white">City</label>
                 <input
                   type="text"
                   required
                   value={address.city}
                   onChange={(e) => setAddress({...address, city: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Pincode</label>
+                <label className="block text-sm font-medium mb-2 text-gray-800 dark:text-white">Pincode</label>
                 <input
                   type="text"
                   required
                   value={address.pincode}
                   onChange={(e) => setAddress({...address, pincode: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
                 />
               </div>
             </div>
             
-            <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h3 className="font-semibold mb-2">Order Summary</h3>
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-6">
+              <h3 className="font-semibold mb-2 text-gray-800 dark:text-white">Order Summary</h3>
               <div className="text-sm space-y-1">
                 {cartItems.map(item => (
                   <div key={item._id} className="flex justify-between">

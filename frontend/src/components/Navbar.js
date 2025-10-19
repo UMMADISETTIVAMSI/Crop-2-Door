@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useCart } from '../contexts/CartContext';
+import LanguageSelector from './LanguageSelector';
 
 const Navbar = ({ user, logout }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -70,6 +71,9 @@ const Navbar = ({ user, logout }) => {
                       >
                         <i className={`fas ${isDark ? 'fa-sun' : 'fa-moon'} mr-3`}></i>{isDark ? 'Light Mode' : 'Dark Mode'}
                       </button>
+                      <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                        <LanguageSelector />
+                      </div>
                       <button 
                         onClick={() => { logout(); setDropdownOpen(false); }}
                         className="flex items-center w-full px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900 transition-all duration-200 text-red-600 dark:text-red-400 text-left rounded-b-lg border-t border-gray-200 dark:border-gray-700"
@@ -88,6 +92,7 @@ const Navbar = ({ user, logout }) => {
                 <button onClick={toggleTheme} className="flex items-center px-4 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 text-gray-800 dark:text-white">
                   <i className={`fas ${isDark ? 'fa-sun' : 'fa-moon'} mr-2`}></i>{isDark ? 'Light' : 'Dark'}
                 </button>
+                <LanguageSelector />
                 <Link to="/register" className="flex items-center px-6 py-2 bg-emerald-400 text-white rounded-full hover:bg-emerald-500 transition-all duration-200 shadow-lg font-semibold">
                   <i className="fas fa-user-plus mr-2"></i>Register
                 </Link>
