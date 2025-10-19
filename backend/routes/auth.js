@@ -108,4 +108,24 @@ router.get('/farmer-areas', async (req, res) => {
   }
 });
 
+router.delete('/account', auth, async (req, res) => {
+  try {
+    const Product = require('../models/Product');
+    const Order = require('../models/Order');
+    
+    // Delete user's products
+    await Product.deleteMany({ farmer: req.user._id });
+    
+    // Delete user's orders
+    await Order.deleteMany({ $or: [{ client: req.user._id }, { farmer: req.user._id }] });
+    
+    // Delete user account
+    await User.findByIdAndDelete(req.user._id);
+    
+    res.json({ message: 'Account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

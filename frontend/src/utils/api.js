@@ -28,6 +28,7 @@ export const auth = {
   login: (data) => api.post('/auth/login', data),
   updateProfile: (data) => api.put('/auth/profile', data),
   getFarmerAreas: () => api.get('/auth/farmer-areas'),
+  deleteAccount: () => api.delete('/auth/account'),
 };
 
 export const products = {

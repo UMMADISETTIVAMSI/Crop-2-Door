@@ -8,6 +8,7 @@ const Register = ({ setUser }) => {
   });
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,6 +25,7 @@ const Register = ({ setUser }) => {
       return;
     }
     
+    setRegistering(true);
     try {
       console.log('Registering with data:', { ...formData, password: '***' });
       const response = await auth.register(formData);
@@ -35,6 +37,8 @@ const Register = ({ setUser }) => {
       console.error('Registration error:', error);
       console.error('Error response:', error.response?.data);
       setError(error.response?.data?.message || error.message || 'Registration failed');
+    } finally {
+      setRegistering(false);
     }
   };
 
@@ -151,8 +155,18 @@ const Register = ({ setUser }) => {
               </div>
             </>
           )}
-          <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors">
-            Register
+          <button 
+            type="submit" 
+            disabled={registering}
+            className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {registering ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>Registering...
+              </>
+            ) : (
+              'Register'
+            )}
           </button>
         </form>
         <p className="text-center mt-4 text-gray-600 dark:text-gray-300">

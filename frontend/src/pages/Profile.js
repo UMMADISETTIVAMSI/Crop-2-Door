@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auth } from '../utils/api';
 
 const Profile = ({ user, setUser }) => {
+  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
@@ -25,8 +27,12 @@ const Profile = ({ user, setUser }) => {
     }
   };
 
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setUpdating(true);
     try {
       const { email, ...updateData } = profile;
       const response = await auth.updateProfile(updateData);
@@ -38,6 +44,32 @@ const Profile = ({ user, setUser }) => {
     } catch (error) {
       console.error('Profile update error:', error);
       alert(error.response?.data?.message || 'Error updating profile');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm('⚠️ WARNING: This will permanently delete your account and all associated data. This action cannot be undone. Are you sure?')) {
+      if (window.confirm('Please confirm again: Delete account permanently?')) {
+        setDeleting(true);
+        try {
+          await auth.deleteAccount();
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          alert('Account deleted successfully');
+          navigate('/');
+        } catch (error) {
+          console.error('Delete account error:', error);
+          if (error.response?.status === 404) {
+            alert('Delete account feature is not available. Please contact support.');
+          } else {
+            alert(error.response?.data?.message || 'Error deleting account');
+          }
+        } finally {
+          setDeleting(false);
+        }
+      }
     }
   };
 
@@ -222,9 +254,18 @@ const Profile = ({ user, setUser }) => {
                     <div className="md:col-span-2 flex space-x-4">
                       <button
                         type="submit"
-                        className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                        disabled={updating}
+                        className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <i className="fas fa-save mr-2"></i>Save Changes
+                        {updating ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin mr-2"></i>Updating...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-save mr-2"></i>Save Changes
+                          </>
+                        )}
                       </button>
                       <button
                         type="button"
@@ -238,13 +279,31 @@ const Profile = ({ user, setUser }) => {
                 )}
                 
                 {!isEditing && (
-                  <div className="mt-8 text-center">
+                  <div className="mt-8 text-center space-y-4">
                     <button
                       onClick={() => setIsEditing(true)}
                       className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                     >
                       <i className="fas fa-edit mr-2"></i>Edit Profile
                     </button>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+                      <button
+                        onClick={handleDeleteAccount}
+                        disabled={deleting}
+                        className="bg-red-600 text-white py-2 px-6 rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deleting ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin mr-2"></i>Deleting...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-trash mr-2"></i>Delete Account
+                          </>
+                        )}
+                      </button>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">This action cannot be undone</p>
+                    </div>
                   </div>
                 )}
           </div>
