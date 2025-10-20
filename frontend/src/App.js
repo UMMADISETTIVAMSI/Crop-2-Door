@@ -47,7 +47,7 @@ function App() {
   return (
     <ThemeProvider>
         <CartProvider>
-          <Router basename="/Crop-2-Door" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Router basename={window.location.hostname === 'ummadisettivamsi.github.io' ? '/Crop-2-Door' : ''} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
           <Navbar user={user} logout={logout} />
           <div style={{ paddingTop: '70px' }}>
