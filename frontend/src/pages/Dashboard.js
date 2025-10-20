@@ -353,9 +353,24 @@ const Dashboard = ({ user }) => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-emerald-500 mx-auto mb-6"></div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Loading Dashboard...</h2>
-          <p className="text-gray-600 dark:text-gray-300">Setting up your personalized experience</p>
+          <div className="relative mb-8">
+            <div className="w-24 h-24 mx-auto">
+              <div className="absolute inset-0 rounded-full border-4 border-emerald-200 dark:border-emerald-800"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin"></div>
+              <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" style={{animationDirection: 'reverse', animationDuration: '1s'}}></div>
+              <div className="absolute inset-4 rounded-full border-4 border-transparent border-t-amber-500 animate-spin" style={{animationDuration: '0.8s'}}></div>
+            </div>
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+              <i className="fas fa-seedling text-2xl text-emerald-600 animate-pulse"></i>
+            </div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 animate-pulse">🌱 Loading Dashboard...</h2>
+          <p className="text-gray-600 dark:text-gray-300 animate-bounce">Setting up your personalized experience</p>
+          <div className="flex justify-center mt-4 space-x-1">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+          </div>
         </div>
       </div>
     );
