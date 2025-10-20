@@ -50,6 +50,40 @@ const Dashboard = ({ user }) => {
   
   const [editingProduct, setEditingProduct] = useState(null);
   const [editProduct, setEditProduct] = useState({});
+  
+  // Order filters
+  const [orderStatusFilter, setOrderStatusFilter] = useState('');
+  const [orderSortBy, setOrderSortBy] = useState('newest');
+  
+  // Revenue calculations
+  const calculateRevenue = () => {
+    if (!orderList || orderList.length === 0) return { total: 0, delivered: 0, pending: 0, thisMonth: 0, avgOrder: 0, totalOrders: 0, pendingCount: 0, confirmedCount: 0, deliveredCount: 0, cancelledCount: 0 };
+    
+    const total = orderList.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const delivered = orderList.filter(o => o.status === 'delivered').reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    const pending = orderList.filter(o => o.status === 'pending' || o.status === 'confirmed').reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    
+    // This month's revenue
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const thisMonth = orderList.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear && order.status === 'delivered';
+    }).reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+    
+    // Average order value
+    const deliveredOrders = orderList.filter(o => o.status === 'delivered');
+    const avgOrder = deliveredOrders.length > 0 ? delivered / deliveredOrders.length : 0;
+    const totalOrders = orderList.length;
+    
+    // Order counts by status
+    const pendingCount = orderList.filter(o => o.status === 'pending').length;
+    const confirmedCount = orderList.filter(o => o.status === 'confirmed').length;
+    const deliveredCount = orderList.filter(o => o.status === 'delivered').length;
+    const cancelledCount = orderList.filter(o => o.status === 'cancelled').length;
+    
+    return { total, delivered, pending, thisMonth, avgOrder, totalOrders, pendingCount, confirmedCount, deliveredCount, cancelledCount };
+  };
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -359,7 +393,7 @@ const Dashboard = ({ user }) => {
           onClick={() => setActiveTab('orders')}
           className={`px-4 py-2 rounded transition-colors ${activeTab === 'orders' ? 'bg-blue-400 text-white' : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-white'}`}
         >
-          {user.role === 'farmer' ? 'Incoming Orders' : 'Orders & Cart'}
+          {user.role === 'farmer' ? 'Incoming Orders' : 'Orders'}
         </button>
       </div>
 
@@ -976,12 +1010,124 @@ const Dashboard = ({ user }) => {
               Refresh
             </button>
           </div>
+          
+          {user.role === 'farmer' && orderList && orderList.length > 0 && (
+            <div className="mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-rupee-sign text-emerald-600 text-2xl mr-3"></i>
+                    <div>
+                      <p className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">Total Revenue</p>
+                      <p className="text-emerald-800 dark:text-emerald-200 text-xl font-bold">₹{calculateRevenue().total.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-clock text-orange-600 text-2xl mr-3"></i>
+                    <div>
+                      <p className="text-orange-600 dark:text-orange-400 text-sm font-medium">Pending Revenue</p>
+                      <p className="text-orange-800 dark:text-orange-200 text-xl font-bold">₹{calculateRevenue().pending.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-shopping-bag text-teal-600 text-2xl mr-3"></i>
+                    <div>
+                      <p className="text-teal-600 dark:text-teal-400 text-sm font-medium">Total Orders</p>
+                      <p className="text-teal-800 dark:text-teal-200 text-xl font-bold">{calculateRevenue().totalOrders}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-hourglass-half text-yellow-600 text-xl mr-3"></i>
+                    <div>
+                      <p className="text-yellow-600 dark:text-yellow-400 text-xs font-medium">Pending</p>
+                      <p className="text-yellow-800 dark:text-yellow-200 text-lg font-bold">{calculateRevenue().pendingCount}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-check text-blue-600 text-xl mr-3"></i>
+                    <div>
+                      <p className="text-blue-600 dark:text-blue-400 text-xs font-medium">Confirmed</p>
+                      <p className="text-blue-800 dark:text-blue-200 text-lg font-bold">{calculateRevenue().confirmedCount}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-check-double text-green-600 text-xl mr-3"></i>
+                    <div>
+                      <p className="text-green-600 dark:text-green-400 text-xs font-medium">Delivered</p>
+                      <p className="text-green-800 dark:text-green-200 text-lg font-bold">{calculateRevenue().deliveredCount}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <i className="fas fa-times text-red-600 text-xl mr-3"></i>
+                    <div>
+                      <p className="text-red-600 dark:text-red-400 text-xs font-medium">Cancelled</p>
+                      <p className="text-red-800 dark:text-red-200 text-lg font-bold">{calculateRevenue().cancelledCount}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-6">
+            <select
+              className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white sm:w-auto w-full"
+              value={orderStatusFilter}
+              onChange={(e) => setOrderStatusFilter(e.target.value)}
+            >
+              <option value="">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            
+            <select
+              className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white sm:w-auto w-full"
+              value={orderSortBy}
+              onChange={(e) => setOrderSortBy(e.target.value)}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="amount-high">Amount: High to Low</option>
+              <option value="amount-low">Amount: Low to High</option>
+            </select>
+          </div>
           <div className="space-y-4">
             {orderList && orderList.length > 0 ? (
               <p className="text-sm text-gray-500 mb-4">Found {orderList.length} orders</p>
             ) : null}
             {orderList && orderList.length > 0 ? orderList
+              .filter(order => {
+                if (orderStatusFilter && order.status !== orderStatusFilter) return false;
+                return true;
+              })
               .sort((a, b) => {
+                if (orderSortBy === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
+                if (orderSortBy === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+                if (orderSortBy === 'amount-high') return b.totalPrice - a.totalPrice;
+                if (orderSortBy === 'amount-low') return a.totalPrice - b.totalPrice;
+                // Default: pending orders first
                 if (a.status === 'pending' && b.status !== 'pending') return -1;
                 if (a.status !== 'pending' && b.status === 'pending') return 1;
                 return 0;
@@ -1010,20 +1156,20 @@ const Dashboard = ({ user }) => {
                   </div>
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
                     {user.role === 'farmer' && order.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => updateOrderStatus(order._id, 'confirmed')}
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          onClick={() => updateOrderStatus(order._id, 'delivered')}
-                          className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
-                        >
-                          Mark Delivered
-                        </button>
-                      </>
+                      <button
+                        onClick={() => updateOrderStatus(order._id, 'confirmed')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
+                      >
+                        Confirm Order
+                      </button>
+                    )}
+                    {user.role === 'farmer' && order.status === 'confirmed' && (
+                      <button
+                        onClick={() => updateOrderStatus(order._id, 'delivered')}
+                        className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
+                      >
+                        Mark Delivered
+                      </button>
                     )}
                     {user.role === 'client' && order.status === 'pending' && (
                       <button
