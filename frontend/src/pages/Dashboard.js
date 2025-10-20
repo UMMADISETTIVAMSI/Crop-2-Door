@@ -195,7 +195,8 @@ const Dashboard = ({ user }) => {
   const loadProducts = async (page = currentPage) => {
     try {
       if (!dataLoaded.products) setLoading(true);
-      const params = { sortBy, sortOrder };
+      const params = { sortBy, sortOrder, page };
+      // Don't set limit to get all products without pagination
       if (searchTerm.trim()) params.search = searchTerm.trim();
       if (category) params.category = category;
       if (deliveryArea) params.deliveryArea = deliveryArea;
