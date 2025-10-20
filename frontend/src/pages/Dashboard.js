@@ -386,7 +386,7 @@ const Dashboard = ({ user }) => {
           )}
           
           <div className="space-y-4 mb-6">
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <input
                 type="text"
                 placeholder="Search Products"
@@ -396,7 +396,7 @@ const Dashboard = ({ user }) => {
               />
 
               <select
-                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white sm:w-auto w-full"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
@@ -409,7 +409,7 @@ const Dashboard = ({ user }) => {
               </select>
 
               <select
-                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white sm:w-auto w-full"
                 value={deliveryArea}
                 onChange={(e) => {
                   setDeliveryArea(e.target.value);
@@ -426,7 +426,7 @@ const Dashboard = ({ user }) => {
 
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors w-full sm:w-auto"
               >
                 <i className="fas fa-filter mr-2"></i>
                 Filters
@@ -964,13 +964,13 @@ const Dashboard = ({ user }) => {
 
       {activeTab === 'orders' && (
         <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
               {user.role === 'farmer' ? 'Order Management' : 'My Orders'}
             </h2>
             <button
               onClick={loadOrders}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center w-full sm:w-auto"
             >
               <i className="fas fa-refresh mr-2"></i>
               Refresh
@@ -987,39 +987,39 @@ const Dashboard = ({ user }) => {
                 return 0;
               })
               .map(order => (
-              <div key={order._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg shadow-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-white">
+              <div key={order._id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 sm:p-6 rounded-lg shadow-lg">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-2 text-gray-800 dark:text-white">
                       {order.product?.name} - {order.quantity} units
                     </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                    <p className="text-gray-600 dark:text-gray-300 mb-2 text-sm sm:text-base">
                       {user.role === 'farmer' ? `Client: ${order.client?.name}` : `Farm: ${order.farmer?.farmName}`}
                     </p>
-                    <p className="text-gray-600 dark:text-gray-300 mb-2">
+                    <p className="text-gray-600 dark:text-gray-300 mb-2 text-sm sm:text-base">
                       Phone: {user.role === 'farmer' ? order.client?.phone : order.farmer?.phone}
                     </p>
                     {user.role === 'farmer' && order.deliveryAddress && (
-                      <p className="text-gray-600 dark:text-gray-300 mb-2">
+                      <p className="text-gray-600 dark:text-gray-300 mb-2 text-sm sm:text-base">
                         <i className="fas fa-map-marker-alt mr-2"></i>
                         Delivery: {order.deliveryAddress}
                       </p>
                     )}
-                    <p className="text-emerald-500 font-bold mb-2">Total: ₹{order.totalPrice}</p>
-                    <p className="text-gray-600 dark:text-gray-300">Status: <span className={`font-semibold ${order.status === 'delivered' ? 'text-green-600' : order.status === 'confirmed' ? 'text-blue-600' : order.status === 'cancelled' ? 'text-red-600' : 'text-orange-600'}`}>{order.status}</span></p>
+                    <p className="text-emerald-500 font-bold mb-2 text-sm sm:text-base">Total: ₹{order.totalPrice}</p>
+                    <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Status: <span className={`font-semibold ${order.status === 'delivered' ? 'text-green-600' : order.status === 'confirmed' ? 'text-blue-600' : order.status === 'cancelled' ? 'text-red-600' : 'text-orange-600'}`}>{order.status}</span></p>
                   </div>
-                  <div className="space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
                     {user.role === 'farmer' && order.status === 'pending' && (
                       <>
                         <button
                           onClick={() => updateOrderStatus(order._id, 'confirmed')}
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transform transition-all duration-200 hover:scale-105"
+                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
                         >
                           Confirm
                         </button>
                         <button
                           onClick={() => updateOrderStatus(order._id, 'delivered')}
-                          className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transform transition-all duration-200 hover:scale-105"
+                          className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
                         >
                           Mark Delivered
                         </button>
@@ -1028,7 +1028,7 @@ const Dashboard = ({ user }) => {
                     {user.role === 'client' && order.status === 'pending' && (
                       <button
                         onClick={() => cancelOrder(order._id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transform transition-all duration-200 hover:scale-105"
+                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transform transition-all duration-200 hover:scale-105 text-sm sm:text-base w-full sm:w-auto"
                       >
                         Cancel Order
                       </button>

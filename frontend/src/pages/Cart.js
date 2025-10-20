@@ -75,25 +75,25 @@ const Cart = ({ user }) => {
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">Shopping Cart</h1>
       
       {!showCheckout ? (
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2">
             {cartItems.map(item => (
-              <div key={item._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-4">
-                <div className="flex items-center justify-between">
+              <div key={item._id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
                   <div className="flex items-center space-x-4">
                     <img 
                       src={item.image || '/api/placeholder/80/80'} 
                       alt={item.name}
-                      className="w-20 h-20 object-cover rounded-lg"
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg flex-shrink-0"
                     />
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800 dark:text-white">{item.name}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">{item.category}</p>
-                      <p className="text-emerald-600 font-bold">₹{item.price}/{item.unit}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-base sm:text-lg text-gray-800 dark:text-white truncate">{item.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm">{item.category}</p>
+                      <p className="text-emerald-600 font-bold text-sm sm:text-base">₹{item.price}/{item.unit}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-between sm:justify-end space-x-4">
                     <div className="flex items-center space-x-2">
                       <label className="text-sm text-gray-600 dark:text-gray-300">Qty:</label>
                       <input
@@ -102,17 +102,17 @@ const Cart = ({ user }) => {
                         max={item.availableQuantity}
                         value={item.quantity}
                         onChange={(e) => handleQuantityChange(item._id, e.target.value)}
-                        className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center bg-white dark:bg-gray-700 text-gray-800 dark:text-white"
+                        className="w-16 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center bg-white dark:bg-gray-700 text-gray-800 dark:text-white text-sm"
                       />
                     </div>
                     
                     <div className="text-right">
-                      <p className="font-bold">₹{(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="font-bold text-sm sm:text-base">₹{(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                     
                     <button
                       onClick={() => removeFromCart(item._id)}
-                      className="text-red-500 hover:text-red-700 p-2"
+                      className="text-red-500 hover:text-red-700 p-2 flex-shrink-0"
                     >
                       <i className="fas fa-trash"></i>
                     </button>
@@ -223,18 +223,18 @@ const Cart = ({ user }) => {
               </div>
             </div>
             
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
                 onClick={() => setShowCheckout(false)}
-                className="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600"
+                className="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 order-2 sm:order-1"
               >
                 Back to Cart
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-emerald-500 text-white py-3 rounded-lg hover:bg-emerald-600 disabled:opacity-50"
+                className="flex-1 bg-emerald-500 text-white py-3 rounded-lg hover:bg-emerald-600 disabled:opacity-50 order-1 sm:order-2"
               >
                 {loading ? 'Placing Order...' : 'Place Order'}
               </button>
