@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
       minPrice, maxPrice, 
       isOrganic, isSeasonal,
       sortBy = 'createdAt', sortOrder = 'desc',
-      page = 1, limit 
+      page = 1, limit = null 
     } = req.query;
     
     let query = {};
