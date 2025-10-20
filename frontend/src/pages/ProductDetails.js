@@ -21,6 +21,7 @@ const ProductDetails = ({ user }) => {
     pincode: ''
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadProduct();
   }, [id]);

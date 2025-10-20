@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { products, orders, auth } from '../utils/api';
 import { useCart } from '../contexts/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -30,7 +30,7 @@ const Dashboard = ({ user }) => {
     deliveryAreas: false
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [, setTotalPages] = useState(1);
   
   // Advanced search filters
   const [minPrice, setMinPrice] = useState('');
@@ -85,6 +85,7 @@ const Dashboard = ({ user }) => {
     return { total, delivered, pending, thisMonth, avgOrder, totalOrders, pendingCount, confirmedCount, deliveredCount, cancelledCount };
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const loadInitialData = async () => {
       setInitialLoading(true);
@@ -142,17 +143,13 @@ const Dashboard = ({ user }) => {
     }
   }, [location.state, navigate, location.pathname]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user.role === 'client') loadFavorites();
 
   }, []);
 
-  const handlePageChange = (page) => {
-    if (page === currentPage) return;
-    setCurrentPage(page);
-    setLoading(true);
-    loadProducts(page);
-  };
+
 
   function debounce(func, wait) {
     let timeout;
@@ -166,16 +163,17 @@ const Dashboard = ({ user }) => {
     };
   }
 
-  const debouncedSearch = useCallback(
-    debounce(() => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(() => {
+    const debounced = debounce(() => {
       if (activeTab === 'browse') {
         setCurrentPage(1);
         setLoading(true);
         loadProducts(1);
       }
-    }, 150),
-    [searchTerm, category, deliveryArea, minPrice, maxPrice, sortBy, sortOrder, activeTab]
-  );
+    }, 150);
+    return debounced();
+  }, [searchTerm, category, deliveryArea, minPrice, maxPrice, sortBy, sortOrder, activeTab]);
 
   useEffect(() => {
     debouncedSearch();
@@ -315,16 +313,7 @@ const Dashboard = ({ user }) => {
     }
   };
 
-  const handleOrder = async (productId, quantity) => {
-    try {
-      await orders.create({ productId, quantity: parseInt(quantity) });
-      alert('Order placed successfully!');
-      await loadProducts();
 
-    } catch (error) {
-      alert(error.response?.data?.message || 'Error placing order');
-    }
-  };
 
   const updateOrderStatus = async (orderId, status) => {
     try {
@@ -350,26 +339,57 @@ const Dashboard = ({ user }) => {
   };
 
   if (initialLoading) {
+    const isFarmer = user?.role === 'farmer';
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-emerald-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className={`min-h-screen flex items-center justify-center ${isFarmer ? 'bg-gradient-to-br from-green-100 via-emerald-50 to-yellow-100 dark:from-black dark:via-gray-900 dark:to-gray-800' : 'bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 dark:from-black dark:via-gray-900 dark:to-gray-800'}`}>
         <div className="text-center">
-          <div className="relative mb-8">
-            <div className="w-24 h-24 mx-auto">
-              <div className="absolute inset-0 rounded-full border-4 border-emerald-200 dark:border-emerald-800"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin"></div>
-              <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-blue-500 animate-spin" style={{animationDirection: 'reverse', animationDuration: '1s'}}></div>
-              <div className="absolute inset-4 rounded-full border-4 border-transparent border-t-amber-500 animate-spin" style={{animationDuration: '0.8s'}}></div>
+          {isFarmer ? (
+            <div className="relative mb-8">
+              <div className="w-32 h-32 mx-auto relative">
+                <div className="absolute inset-0 rounded-full border-8 border-green-200 dark:border-green-400 opacity-30"></div>
+                <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-green-500 dark:border-t-green-300 animate-spin shadow-lg"></div>
+                <div className="absolute inset-4 rounded-full border-6 border-transparent border-t-yellow-500 dark:border-t-yellow-300 animate-spin shadow-md" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <i className="fas fa-tractor text-4xl text-green-600 dark:text-green-300 animate-bounce drop-shadow-lg"></i>
+                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 dark:bg-yellow-300 rounded-full animate-ping shadow-lg"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center mt-4 space-x-2">
+                <i className="fas fa-wheat-awn text-green-500 dark:text-green-300 text-xl animate-pulse drop-shadow-md" style={{animationDelay: '0s'}}></i>
+                <i className="fas fa-corn text-yellow-500 dark:text-yellow-300 text-xl animate-pulse drop-shadow-md" style={{animationDelay: '0.3s'}}></i>
+                <i className="fas fa-carrot text-orange-500 dark:text-orange-300 text-xl animate-pulse drop-shadow-md" style={{animationDelay: '0.6s'}}></i>
+              </div>
+              <h2 className="text-3xl font-bold text-green-800 dark:text-green-100 mb-2 mt-4 drop-shadow-lg">🚜 Farmer Dashboard Loading...</h2>
+              <p className="text-green-600 dark:text-green-200 text-lg drop-shadow-md">Preparing your farm management tools</p>
             </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <i className="fas fa-seedling text-2xl text-emerald-600 animate-pulse"></i>
+          ) : (
+            <div className="relative mb-8">
+              <div className="w-32 h-32 mx-auto relative">
+                <div className="absolute inset-0 rounded-full border-8 border-blue-200 dark:border-blue-400 opacity-30"></div>
+                <div className="absolute inset-0 rounded-full border-8 border-transparent border-t-blue-500 dark:border-t-blue-300 animate-spin shadow-lg"></div>
+                <div className="absolute inset-4 rounded-full border-6 border-transparent border-t-purple-500 dark:border-t-purple-300 animate-spin shadow-md" style={{animationDirection: 'reverse', animationDuration: '1.2s'}}></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative">
+                    <i className="fas fa-shopping-basket text-4xl text-blue-600 dark:text-blue-300 animate-bounce drop-shadow-lg"></i>
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 dark:bg-pink-300 rounded-full animate-ping shadow-lg"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-center mt-4 space-x-2">
+                <i className="fas fa-apple-alt text-red-500 dark:text-red-300 text-xl animate-bounce drop-shadow-md" style={{animationDelay: '0s'}}></i>
+                <i className="fas fa-lemon text-yellow-500 dark:text-yellow-300 text-xl animate-bounce drop-shadow-md" style={{animationDelay: '0.2s'}}></i>
+                <i className="fas fa-pepper-hot text-red-600 dark:text-red-300 text-xl animate-bounce drop-shadow-md" style={{animationDelay: '0.4s'}}></i>
+              </div>
+              <h2 className="text-3xl font-bold text-blue-800 dark:text-blue-100 mb-2 mt-4 drop-shadow-lg">🛍️ Client Dashboard Loading...</h2>
+              <p className="text-blue-600 dark:text-blue-200 text-lg drop-shadow-md">Finding fresh products for you</p>
             </div>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2 animate-pulse">🌱 Loading Dashboard...</h2>
-          <p className="text-gray-600 dark:text-gray-300 animate-bounce">Setting up your personalized experience</p>
-          <div className="flex justify-center mt-4 space-x-1">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-            <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+          )}
+          <div className="flex justify-center mt-6 space-x-1">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className={`w-3 h-3 ${isFarmer ? 'bg-green-500 dark:bg-green-300' : 'bg-blue-500 dark:bg-blue-300'} rounded-full animate-bounce shadow-md`} style={{animationDelay: `${i * 0.1}s`}}></div>
+            ))}
           </div>
         </div>
       </div>
