@@ -1,13 +1,19 @@
 import axios from 'axios';
-import { API_URL } from '../config';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
@@ -24,33 +30,29 @@ api.interceptors.response.use(
 );
 
 export const auth = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-  updateProfile: (data) => api.put('/auth/profile', data),
+  register: (userData) => api.post('/auth/register', userData),
+  login: (credentials) => api.post('/auth/login', credentials),
+  updateProfile: (profileData) => api.put('/auth/profile', profileData),
   getFarmerAreas: () => api.get('/auth/farmer-areas'),
-  deleteAccount: () => api.delete('/auth/account'),
 };
 
 export const products = {
   getAll: (params) => api.get('/products', { params }),
   getById: (id) => api.get(`/products/${id}`),
-  getDeliveryAreas: () => api.get('/products/delivery-areas'),
-  create: (data) => api.post('/products', data),
-  getMyProducts: () => api.get('/products/my-products'),
-  update: (id, data) => api.put(`/products/${id}`, data),
+  create: (productData) => api.post('/products', productData),
+  update: (id, productData) => api.put(`/products/${id}`, productData),
   delete: (id) => api.delete(`/products/${id}`),
+  getMyProducts: () => api.get('/products/my-products'),
   getFavorites: () => api.get('/products/favorites'),
-  toggleFavorite: (id) => api.post(`/products/${id}/favorite`),
-  getRevenueReport: (period) => api.get('/products/revenue-report', { params: { period } }),
+  toggleFavorite: (productId) => api.post(`/products/${productId}/favorite`),
 };
 
 export const orders = {
-  create: (data) => api.post('/orders', data),
+  create: (orderData) => api.post('/orders', orderData),
   getMyOrders: () => api.get('/orders/my-orders'),
   getFarmerOrders: () => api.get('/orders/farmer-orders'),
-  updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
-  cancel: (id) => api.put(`/orders/${id}/cancel`),
-
+  updateStatus: (orderId, status) => api.put(`/orders/${orderId}/status`, { status }),
+  cancel: (orderId) => api.put(`/orders/${orderId}/cancel`),
 };
 
 export default api;
