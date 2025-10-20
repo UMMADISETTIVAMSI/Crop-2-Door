@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
       minPrice, maxPrice, 
       isOrganic, isSeasonal,
       sortBy = 'createdAt', sortOrder = 'desc',
-      page = 1, limit = 12 
+      page = 1, limit 
     } = req.query;
     
     let query = {};
@@ -59,19 +59,23 @@ router.get('/', async (req, res) => {
         sortOptions.createdAt = order;
     }
     
-    const skip = (page - 1) * limit;
-    const products = await Product.find(query)
+    let productsQuery = Product.find(query)
       .select('name category price quantity unit image farmName farmAddress farmPhone')
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean();
+      .sort(sortOptions);
+    
+    if (limit) {
+      const skip = (page - 1) * limit;
+      productsQuery = productsQuery.skip(skip).limit(parseInt(limit));
+    }
+    
+    const products = await productsQuery.lean();
     
     // Skip view count update for now to avoid issues
     
     const total = await Product.countDocuments(query);
+    const totalPages = limit ? Math.ceil(total / limit) : 1;
     
-    res.json({ products, total, page: parseInt(page), totalPages: Math.ceil(total / limit) });
+    res.json({ products, total, page: parseInt(page), totalPages });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

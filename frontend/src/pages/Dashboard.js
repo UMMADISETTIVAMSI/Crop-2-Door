@@ -195,7 +195,7 @@ const Dashboard = ({ user }) => {
   const loadProducts = async (page = currentPage) => {
     try {
       if (!dataLoaded.products) setLoading(true);
-      const params = { page, limit: 12, sortBy, sortOrder };
+      const params = { sortBy, sortOrder };
       if (searchTerm.trim()) params.search = searchTerm.trim();
       if (category) params.category = category;
       if (deliveryArea) params.deliveryArea = deliveryArea;
