@@ -621,39 +621,7 @@ const Dashboard = ({ user }) => {
                 )}
               </div>
               
-              {totalPages > 1 && (
-                <div className="flex justify-center mt-8 space-x-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || loading}
-                    className="px-4 py-2 border border-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-800"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                    return (
-                      <button
-                        key={`page-${pageNum}`}
-                        onClick={() => handlePageChange(pageNum)}
-                        disabled={loading}
-                        className={`px-4 py-2 border border-gray-200 rounded disabled:opacity-50 ${
-                          currentPage === pageNum ? 'bg-blue-400 text-white' : 'bg-white text-gray-800 hover:opacity-80'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || loading}
-                    className="px-4 py-2 border border-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed bg-white text-gray-800"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+
             </>
           )}
         </div>
