@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/Crop-2-Door/static/js/main.b44b8fdc.js",
+    "main.js": "/Crop-2-Door/static/js/main.e96189be.js",
     "index.html": "/Crop-2-Door/index.html",
-    "main.b44b8fdc.js.map": "/Crop-2-Door/static/js/main.b44b8fdc.js.map"
+    "main.e96189be.js.map": "/Crop-2-Door/static/js/main.e96189be.js.map"
   },
   "entrypoints": [
-    "static/js/main.b44b8fdc.js"
+    "static/js/main.e96189be.js"
   ]
 }

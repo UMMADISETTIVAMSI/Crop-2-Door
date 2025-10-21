@@ -61,20 +61,13 @@ const Home = () => {
             <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-4">Why Choose Crop2Door?</h2>
             <p className="text-xl text-gray-600 dark:text-gray-300">Experience the difference of direct farm-to-table shopping</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="text-4xl mb-4 text-emerald-500">
                 <i className="fas fa-leaf"></i>
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Fresh & Organic</h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Get the freshest, pesticide-free produce harvested just for you from certified organic farms.</p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <div className="text-4xl mb-4 text-emerald-500">
-                <i className="fas fa-truck"></i>
-              </div>
-              <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Fast Delivery</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Quick and reliable delivery from local farms in your area, ensuring maximum freshness.</p>
             </div>
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               <div className="text-4xl mb-4 text-emerald-500">
